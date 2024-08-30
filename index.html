@@ -123,7 +123,136 @@
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDK8wkAiWnXTbeN7gwhg6YY8aZnqFRe7CA&libraries=places&callback=initMap" async defer></script>
     <script>
-        // Código JavaScript permanece o mesmo
+        let autocompleteLocalizacao;
+        let autocompleteDestino;
+        let map;
+        let marker;
+        let activeInput;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: -16.4673, lng: -54.6372},
+                zoom: 13,
+            });
+
+            marker = new google.maps.Marker({
+                map: map,
+                draggable: true,
+            });
+
+            autocompleteLocalizacao = new google.maps.places.Autocomplete(
+                document.getElementById('localizacao-input')
+            );
+            autocompleteDestino = new google.maps.places.Autocomplete(
+                document.getElementById('destino-input')
+            );
+
+            autocompleteLocalizacao.addListener('place_changed', function() {
+                let place = autocompleteLocalizacao.getPlace();
+                document.getElementById('localizacao').value = place.formatted_address;
+                marker.setPosition(place.geometry.location);
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+            });
+
+            autocompleteDestino.addListener('place_changed', function() {
+                let place = autocompleteDestino.getPlace();
+                document.getElementById('destino').value = place.formatted_address;
+                marker.setPosition(place.geometry.location);
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+            });
+
+            map.addListener('click', function(event) {
+                marker.setPosition(event.latLng);
+                map.panTo(event.latLng);
+                let geocoder = new google.maps.Geocoder();
+                geocoder.geocode({'location': event.latLng}, function(results, status) {
+                    if (status === 'OK') {
+                        if (results[0]) {
+                            document.getElementById(activeInput).value = results[0].formatted_address;
+                            if (activeInput === 'localizacao-input') {
+                                document.getElementById('localizacao').value = results[0].formatted_address;
+                            } else if (activeInput === 'destino-input') {
+                                document.getElementById('destino').value = results[0].formatted_address;
+                            }
+                        }
+                    }
+                });
+            });
+
+            marker.addListener('dragend', function() {
+                let position = marker.getPosition();
+                map.panTo(position);
+                let geocoder = new google.maps.Geocoder();
+                geocoder.geocode({'location': position}, function(results, status) {
+                    if (status === 'OK') {
+                        if (results[0]) {
+                            document.getElementById(activeInput).value = results[0].formatted_address;
+                            if (activeInput === 'localizacao-input') {
+                                document.getElementById('localizacao').value = results[0].formatted_address;
+                            } else if (activeInput === 'destino-input') {
+                                document.getElementById('destino').value = results[0].formatted_address;
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function showMap(inputId) {
+            document.getElementById('map').style.display = 'block';
+            activeInput = inputId;
+            if (inputId === 'localizacao-input') {
+                let place = autocompleteLocalizacao.getPlace();
+                if (place && place.geometry) {
+                    map.setCenter(place.geometry.location);
+                    marker.setPosition(place.geometry.location);
+                }
+            } else if (inputId === 'destino-input') {
+                let place = autocompleteDestino.getPlace();
+                if (place && place.geometry) {
+                    map.setCenter(place.geometry.location);
+                    marker.setPosition(place.geometry.location);
+                }
+            }
+        }
+
+        function clearLocalizacao() {
+            document.getElementById('localizacao-input').value = '';
+            document.getElementById('localizacao').value = '';
+            hideMap();
+        }
+
+        function clearDestino() {
+            document.getElementById('destino-input').value = '';
+            document.getElementById('destino').value = '';
+            hideMap();
+        }
+
+        function hideMap() {
+            document.getElementById('map').style.display = 'none';
+        }
+
+        function submitForm() {
+            // Implementar a lógica para enviar os dados do formulário
+            alert('Pedido enviado com sucesso!');
+        }
+
+        function clearForm() {
+            document.getElementById('pedido-form').reset();
+            document.getElementById('resumo').innerHTML = '';
+            hideMap();
+        }
+
+        function novoPedido() {
+            clearForm();
+            hideMap();
+        }
+
+        function solicitarEntregador() {
+            alert('Entregador solicitado!');
+        }
     </script>
 </head>
 <body>
@@ -152,30 +281,16 @@
             </div>
             <input type="hidden" id="destino" name="destino">
 
-            <label for="cliente-nome">Nome do Cliente Destinatário:</label>
-            <input type="text" id="cliente-nome" name="cliente-nome" required>
-
-            <label for="cliente-telefone">Telefone do Cliente Destinatário:</label>
-            <input type="text" id="cliente-telefone" name="cliente-telefone" required>
-
             <div class="button-container">
                 <button type="button" onclick="submitForm()">Enviar Pedido</button>
                 <button type="button" onclick="clearForm()">Limpar Formulário</button>
-                <button type="button" onclick="novoPedido()">Novo Pedido</button>
             </div>
         </form>
-
         <div id="map"></div>
-
         <div id="resumo"></div>
-
         <div class="action-buttons">
+            <button type="button" onclick="novoPedido()">Novo Pedido</button>
             <button type="button" onclick="solicitarEntregador()">Solicitar Entregador</button>
-        </div>
-
-        <div class="button-container">
-            <!-- Botão Adicionado -->
-            <button type="button">Adicionar Novo Destino</button>
         </div>
     </div>
 </body>
