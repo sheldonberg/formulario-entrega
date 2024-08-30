@@ -1,179 +1,388 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário de Pedidos de Entrega</title>
+    <title>Pedido de Entrega</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+            margin: 0;
+            background-color: #f4f4f4;
         }
-        
-        .form-group {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 15px;
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
-        .form-group label {
-            width: 100%;
-            max-width: 150px;
-            margin-bottom: 5px;
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
             font-weight: bold;
         }
-
-        .form-group input {
-            flex: 1;
+        input[type="text"] {
+            width: calc(100% - 22px);
             padding: 10px;
-            margin-right: 10px;
-            width: calc(100% - 160px);
-            max-width: calc(100% - 160px);
-        }
-
-        .form-group button {
-            padding: 10px 20px;
             margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-
-        #destinos-container {
-            margin-top: 20px;
+        .button-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .destino-group {
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
+        .button-container button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100px;
         }
-
+        .button-container button:hover {
+            background-color: #45a049;
+        }
         #map {
+            height: 300px;
             width: 100%;
-            height: 400px;
-            margin-top: 20px;
+            margin: 20px 0;
+            display: none; /* Ocultar o mapa inicialmente */
         }
-
-        @media (max-width: 768px) {
-            .form-group {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .form-group input {
-                width: 100%;
-                margin-right: 0;
-            }
-
-            .form-group label {
-                max-width: 100%;
-            }
-
-            .form-group button {
-                width: 100%;
-                margin-top: 10px;
-            }
-
-            #map {
-                height: 300px;
-            }
+        #resumo {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            display: none; /* Ocultar botões inicialmente */
+        }
+        .action-buttons button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .action-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .button-inline {
+            display: flex;
+            gap: 10px;
         }
     </style>
-</head>
-<body>
-    <h1>Formulário de Pedidos de Entrega</h1>
-
-    <div class="form-group">
-        <label for="empresa">Nome da Empresa:</label>
-        <input type="text" id="empresa" name="empresa">
-    </div>
-
-    <div class="form-group">
-        <label for="telefone-empresa">Telefone da Empresa:</label>
-        <input type="text" id="telefone-empresa" name="telefone-empresa">
-    </div>
-
-    <div class="form-group">
-        <label for="endereco-empresa">Endereço da Empresa:</label>
-        <input type="text" id="endereco-empresa" name="endereco-empresa">
-        <button type="button" id="marcar-endereco-empresa">Marcar no Mapa</button>
-    </div>
-
-    <h2>Destinos</h2>
-    <div id="destinos-container"></div>
-    <button type="button" id="adicionar-destino">Adicionar Novo Destino</button>
-
-    <div id="map"></div>
-
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDK8wkAiWnXTbeN7gwhg6YY8aZnqFRe7CA&libraries=places&callback=initMap" async defer></script>
     <script>
-        let destinoCounter = 0;
-        const maxDestinos = 10;
-
-        function adicionarDestino() {
-            if (destinoCounter >= maxDestinos) {
-                alert("O número máximo de destinos é 10.");
-                return;
-            }
-
-            destinoCounter++;
-            const destinosContainer = document.getElementById("destinos-container");
-
-            const destinoGroup = document.createElement("div");
-            destinoGroup.className = "destino-group";
-            destinoGroup.innerHTML = `
-                <div class="form-group">
-                    <label for="destino-${destinoCounter}">Destino ${destinoCounter}:</label>
-                    <input type="text" id="destino-${destinoCounter}" name="destino-${destinoCounter}">
-                    <button type="button" onclick="marcarNoMapa('destino-${destinoCounter}')">Marcar no Mapa</button>
-                </div>
-                <div class="form-group">
-                    <label for="cliente-${destinoCounter}">Nome do Cliente ${destinoCounter}:</label>
-                    <input type="text" id="cliente-${destinoCounter}" name="cliente-${destinoCounter}">
-                </div>
-                <div class="form-group">
-                    <label for="telefone-cliente-${destinoCounter}">Telefone do Cliente ${destinoCounter}:</label>
-                    <input type="text" id="telefone-cliente-${destinoCounter}" name="telefone-cliente-${destinoCounter}">
-                </div>
-            `;
-            destinosContainer.appendChild(destinoGroup);
-        }
-
-        document.getElementById("adicionar-destino").addEventListener("click", adicionarDestino);
+        let map;
+        let markerLocalizacao;
+        let markerDestino;
+        let infoWindow;
+        let autocompleteLocalizacao;
+        let autocompleteDestino;
+        let geocoder;
+        let currentInputId;
+        let distanceService;
 
         function initMap() {
-            const rondonopolis = { lat: -16.4673, lng: -54.6372 };
-            const map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 13,
+            const rondonopolis = { lat: -16.4681, lng: -54.6376 };
+
+            map = new google.maps.Map(document.getElementById("map"), {
                 center: rondonopolis,
+                zoom: 12,
             });
 
-            google.maps.event.addListener(map, 'click', function(event) {
-                placeMarker(map, event.latLng);
+            infoWindow = new google.maps.InfoWindow();
+            geocoder = new google.maps.Geocoder();
+            distanceService = new google.maps.DistanceMatrixService();
+
+            map.addListener("click", (event) => {
+                placeMarker(event.latLng);
             });
 
-            function placeMarker(map, location) {
-                if (currentInput) {
-                    const marker = new google.maps.Marker({
-                        position: location,
+            const inputLocalizacao = document.getElementById("localizacao-input");
+            autocompleteLocalizacao = new google.maps.places.Autocomplete(inputLocalizacao);
+            autocompleteLocalizacao.setFields(["geometry", "formatted_address"]);
+            autocompleteLocalizacao.bindTo("bounds", map);
+
+            autocompleteLocalizacao.addListener("place_changed", () => {
+                const place = autocompleteLocalizacao.getPlace();
+                if (place.geometry) {
+                    setMapCenter(place.geometry.location);
+                    if (markerLocalizacao) {
+                        markerLocalizacao.setMap(null);
+                    }
+                    markerLocalizacao = new google.maps.Marker({
+                        position: place.geometry.location,
                         map: map,
+                        title: "Localização da Empresa",
                     });
-                    currentInput.value = `${location.lat()}, ${location.lng()}`;
+                    document.getElementById("localizacao-input").value = place.formatted_address;
+                    document.getElementById("localizacao").value = place.formatted_address;
+                    infoWindow.setContent("Localização da Empresa Marcada.");
+                    infoWindow.open(map, markerLocalizacao);
+                    document.getElementById("map").style.display = 'none'; // Oculta o mapa após a seleção
                 }
+            });
+
+            const inputDestino = document.getElementById("destino-input");
+            autocompleteDestino = new google.maps.places.Autocomplete(inputDestino);
+            autocompleteDestino.setFields(["geometry", "formatted_address"]);
+            autocompleteDestino.bindTo("bounds", map);
+
+            autocompleteDestino.addListener("place_changed", () => {
+                const place = autocompleteDestino.getPlace();
+                if (place.geometry) {
+                    setMapCenter(place.geometry.location);
+                    if (markerDestino) {
+                        markerDestino.setMap(null);
+                    }
+                    markerDestino = new google.maps.Marker({
+                        position: place.geometry.location,
+                        map: map,
+                        title: "Local de Destino",
+                    });
+                    document.getElementById("destino-input").value = place.formatted_address;
+                    document.getElementById("destino").value = place.formatted_address;
+                    infoWindow.setContent("Local de Destino Marcado.");
+                    infoWindow.open(map, markerDestino);
+                    document.getElementById("map").style.display = 'none'; // Oculta o mapa após a seleção
+                }
+            });
+        }
+
+        function setMapCenter(location) {
+            map.setCenter(location);
+            map.setZoom(15);
+        }
+
+        function placeMarker(location) {
+            if (currentInputId === 'localizacao-input') {
+                if (markerLocalizacao) {
+                    markerLocalizacao.setMap(null);
+                }
+                geocoder.geocode({ location: location }, (results, status) => {
+                    if (status === "OK" && results[0]) {
+                        document.getElementById("localizacao-input").value = results[0].formatted_address;
+                        document.getElementById("localizacao").value = results[0].formatted_address;
+                        markerLocalizacao = new google.maps.Marker({
+                            position: location,
+                            map: map,
+                            title: "Localização da Empresa",
+                        });
+                        infoWindow.setContent("Localização da Empresa Marcada.");
+                        infoWindow.open(map, markerLocalizacao);
+                        setMapCenter(location);
+                        document.getElementById("map").style.display = 'none'; // Oculta o mapa após a seleção
+                    } else {
+                        alert("Geocodificação falhou: " + status);
+                    }
+                });
+            } else if (currentInputId === 'destino-input') {
+                if (markerDestino) {
+                    markerDestino.setMap(null);
+                }
+                geocoder.geocode({ location: location }, (results, status) => {
+                    if (status === "OK" && results[0]) {
+                        document.getElementById("destino-input").value = results[0].formatted_address;
+                        document.getElementById("destino").value = results[0].formatted_address;
+                        markerDestino = new google.maps.Marker({
+                            position: location,
+                            map: map,
+                            title: "Local de Destino",
+                        });
+                        infoWindow.setContent("Local de Destino Marcado.");
+                        infoWindow.open(map, markerDestino);
+                        setMapCenter(location);
+                        document.getElementById("map").style.display = 'none'; // Oculta o mapa após a seleção
+                    } else {
+                        alert("Geocodificação falhou: " + status);
+                    }
+                });
+            }
+        }
+
+        function clearLocalizacao() {
+            if (markerLocalizacao) {
+                markerLocalizacao.setMap(null);
+                markerLocalizacao = null;
+            }
+            document.getElementById("localizacao-input").value = "";
+            document.getElementById("localizacao").value = "";
+        }
+
+        function clearDestino() {
+            if (markerDestino) {
+                markerDestino.setMap(null);
+                markerDestino = null;
+            }
+            document.getElementById("destino-input").value = "";
+            document.getElementById("destino").value = "";
+        }
+
+        function calculateCost(distance) {
+            let motoCost, carCost;
+            const km = parseFloat(distance.replace(' km', ''));
+            if (isNaN(km)) return { moto: 0, car: 0 };
+
+            // Moto cost calculation
+            if (km <= 2) {
+                motoCost = 8.00;
+            } else {
+                motoCost = 8.00 + (km - 2) * 1.00;
             }
 
-            let currentInput = null;
+            // Car cost calculation
+            if (km <= 2) {
+                carCost = 12.00;
+            } else {
+                carCost = 12.00 + (km - 2) * 1.00;
+            }
 
-            document.getElementById("marcar-endereco-empresa").addEventListener("click", function() {
-                currentInput = document.getElementById("endereco-empresa");
-            });
+            return { moto: motoCost.toFixed(2), car: carCost.toFixed(2) };
+        }
 
-            window.marcarNoMapa = function(id) {
-                currentInput = document.getElementById(id);
-            };
+        function submitForm() {
+            const empresa = document.getElementById("empresa").value;
+            const telefone = document.getElementById("telefone").value;
+            const localizacao = document.getElementById("localizacao").value;
+            const destino = document.getElementById("destino").value;
+            const clienteNome = document.getElementById("cliente-nome").value;
+            const clienteTelefone = document.getElementById("cliente-telefone").value;
+
+            if (empresa && telefone && localizacao && destino && clienteNome && clienteTelefone) {
+                distanceService.getDistanceMatrix(
+                    {
+                        origins: [localizacao],
+                        destinations: [destino],
+                        travelMode: 'DRIVING',
+                    },
+                    (response, status) => {
+                        if (status === 'OK') {
+                            const results = response.rows[0].elements[0];
+                            if (results.status === 'OK') {
+                                const distance = results.distance.text;
+                                const { moto, car } = calculateCost(distance);
+
+                                document.getElementById("resumo").innerHTML = `
+                                    <h2>Resumo do Pedido</h2>
+                                    <p><strong>Empresa:</strong> ${empresa}</p>
+                                    <p><strong>Telefone:</strong> ${telefone}</p>
+                                    <p><strong>Localização:</strong> ${localizacao}</p>
+                                    <p><strong>Destino:</strong> ${destino}</p>
+                                    <p><strong>Nome do Cliente:</strong> ${clienteNome}</p>
+                                    <p><strong>Telefone do Cliente:</strong> ${clienteTelefone}</p>
+                                    <p><strong>Distância:</strong> ${distance}</p>
+                                    <p><strong>Custo Moto:</strong> R$ ${moto}</p>
+                                    <p><strong>Custo Carro:</strong> R$ ${car}</p>
+                                `;
+
+                                document.querySelector(".action-buttons").style.display = 'flex'; // Exibe os botões de ação
+                            } else {
+                                alert("Erro ao calcular a distância: " + results.status);
+                            }
+                        } else {
+                            alert("Erro ao calcular a distância: " + status);
+                        }
+                    }
+                );
+            } else {
+                alert("Por favor, preencha todos os campos.");
+            }
+        }
+
+        function clearForm() {
+            document.getElementById("empresa").value = "";
+            document.getElementById("telefone").value = "";
+            document.getElementById("localizacao-input").value = "";
+            document.getElementById("destino-input").value = "";
+            document.getElementById("cliente-nome").value = "";
+            document.getElementById("cliente-telefone").value = "";
+            clearLocalizacao();
+            clearDestino();
+            document.getElementById("resumo").innerHTML = "";
+            document.querySelector(".action-buttons").style.display = 'none'; // Oculta os botões de ação
+        }
+
+        function novoPedido() {
+            clearForm();
+            document.getElementById("map").style.display = 'block'; // Exibe o mapa para novo pedido
+        }
+
+        function solicitarEntregador() {
+            alert("Pedido enviado para o entregador.");
+        }
+
+        function showMap(inputId) {
+            currentInputId = inputId;
+            document.getElementById("map").style.display = 'block'; // Exibe o mapa para seleção de localização ou destino
         }
     </script>
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap">
-    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Pedido de Entrega</h1>
+        <form id="pedido-form">
+            <label for="empresa">Nome da Empresa:</label>
+            <input type="text" id="empresa" name="empresa" required>
+
+            <label for="telefone">Telefone da Empresa:</label>
+            <input type="text" id="telefone" name="telefone" required>
+
+            <label for="localizacao-input">Localização:</label>
+            <div class="button-inline">
+                <input type="text" id="localizacao-input" name="localizacao-input" onclick="showMap('localizacao-input')" required>
+                <button type="button" onclick="clearLocalizacao()">Limpar</button>
+                <button type="button" onclick="showMap('localizacao-input')">Marcar no Mapa</button>
+            </div>
+            <input type="hidden" id="localizacao" name="localizacao">
+
+            <label for="destino-input">Destino:</label>
+            <div class="button-inline">
+                <input type="text" id="destino-input" name="destino-input" onclick="showMap('destino-input')" required>
+                <button type="button" onclick="clearDestino()">Limpar</button>
+                <button type="button" onclick="showMap('destino-input')">Marcar no Mapa</button>
+            </div>
+            <input type="hidden" id="destino" name="destino">
+
+            <label for="cliente-nome">Nome do Cliente Destinatário:</label>
+            <input type="text" id="cliente-nome" name="cliente-nome" required>
+
+            <label for="cliente-telefone">Telefone do Cliente Destinatário:</label>
+            <input type="text" id="cliente-telefone" name="cliente-telefone" required>
+
+            <div class="button-container">
+                <button type="button" onclick="submitForm()">Enviar Pedido</button>
+                <button type="button" onclick="clearForm()">Limpar Formulário</button>
+                <button type="button" onclick="novoPedido()">Novo Pedido</button>
+            </div>
+        </form>
+
+        <div id="map"></div>
+
+        <div id="resumo"></div>
+
+        <div class="action-buttons">
+            <button type="button" onclick="solicitarEntregador()">Solicitar Entregador</button>
+        </div>
+
+        <div class="button-container">
+            <!-- Botão Adicionado -->
+            <button type="button">Adicionar Novo Destino</button>
+        </div>
+    </div>
 </body>
 </html>
